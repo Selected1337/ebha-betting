@@ -6,29 +6,25 @@
   <title>EBHA Sportsbook</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * {
-      transition: all 0.3s ease-in-out;
-    }
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background-color: #0b0c10;
-      color: #fff;
+      background-color: #0a0a0a;
+      color: #ffffff;
     }
     header {
-      background-color: #1f2833;
-      padding: 1rem 2rem;
+      background-color: #121212;
+      padding: 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     header h1 {
-      font-size: 1.8rem;
-      color: #66fcf1;
+      font-size: 1.5rem;
+      color: #00ff87;
     }
     .balance {
-      font-weight: 600;
-      color: #45a29e;
+      color: #ffffff;
     }
     #login-screen {
       display: flex;
@@ -36,81 +32,92 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
+      background-color: #0a0a0a;
     }
-    #login-screen input {
+    #login-screen input, #login-screen button {
       margin: 0.5rem;
       padding: 0.5rem;
-      border-radius: 5px;
+      width: 200px;
       border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    #login-screen input {
+      background-color: #1c1c1c;
+      color: #ffffff;
     }
     #login-screen button {
-      padding: 0.5rem 1rem;
-      background-color: #66fcf1;
-      border: none;
-      border-radius: 5px;
+      background-color: #00ff87;
+      color: #000;
       font-weight: bold;
       cursor: pointer;
-    }
-    #login-screen button:hover {
-      background-color: #45a29e;
     }
     main {
-      padding: 2rem;
+      padding: 1rem;
     }
-    .game-panel {
-      background-color: #1f2833;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(102, 252, 241, 0.1);
-    }
-    .game-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-    .game-header img {
-      height: 40px;
+    .game-card {
+      background-color: #1c1c1c;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      padding: 1rem;
     }
     .teams {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: bold;
-    }
-    .odds, .props-odds {
       display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-top: 0.5rem;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
     }
-    .odds button, .props-odds button {
-      background-color: #66fcf1;
+    .odds-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .odds-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      width: 33%;
+    }
+    .odds-group label {
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .odds-group button {
+      background-color: #2c2c2e;
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
+      color: #00ff87;
       font-weight: bold;
+      padding: 0.5rem;
+      border-radius: 5px;
       cursor: pointer;
     }
-    .odds button:hover, .props-odds button:hover {
-      background-color: #45a29e;
+    .odds-group button:hover {
+      background-color: #444;
     }
     #betslip {
-      background-color: #1f2833;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #121212;
+      color: #fff;
       padding: 1rem;
-      border-radius: 10px;
-      margin: 2rem;
-      color: white;
+      border-top: 1px solid #333;
     }
     #betslip h3 {
       margin-top: 0;
     }
     #betslip ul {
-      padding-left: 20px;
+      padding-left: 1rem;
     }
     footer {
       text-align: center;
       padding: 1rem;
-      color: #c5c6c7;
+      font-size: 0.9rem;
+      background-color: #0a0a0a;
+      color: #666;
     }
   </style>
 </head>
@@ -122,20 +129,20 @@
     <button onclick="login()">Login</button>
   </div>
 
-  <header style="display:none">
+  <header style="display: none">
     <h1>EBHA Sportsbook</h1>
     <div class="balance">Balance: $<span id="balance">0</span></div>
   </header>
 
-  <main id="games" style="display:none"></main>
+  <main id="games" style="display: none"></main>
 
-  <div id="betslip" style="display:none">
+  <div id="betslip" style="display: none">
     <h3>Bet Slip</h3>
     <ul id="bets"></ul>
     <p><strong>Total Payout:</strong> $<span id="payout">0</span></p>
   </div>
 
-  <footer style="display:none">
+  <footer style="display: none">
     &copy; 2025 Elite Ball Hockey Association
   </footer>
 
@@ -146,13 +153,11 @@
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
       if (!username || !password) return alert('Please fill in both fields.');
-
       localStorage.setItem('loggedInUser', username);
       if (!localStorage.getItem(`${username}_balance`)) {
         localStorage.setItem(`${username}_balance`, '1000');
         localStorage.setItem(`${username}_bets`, JSON.stringify([]));
       }
-
       document.getElementById('login-screen').style.display = 'none';
       document.querySelector('header').style.display = 'flex';
       document.querySelector('main').style.display = 'block';
@@ -163,8 +168,9 @@
       loadBetHistory();
     }
 
-    function fetchJSON(path) {
-      return fetch(path).then(res => res.json());
+    async function fetchJSON(path) {
+      const res = await fetch(path);
+      return await res.json();
     }
 
     function getBalance() {
@@ -189,48 +195,39 @@
     function addBet(description, odds) {
       const username = localStorage.getItem('loggedInUser');
       if (!username) return alert('Please log in.');
-
-      const duplicate = betHistory.find(bet => bet.description === description);
+      const duplicate = betHistory.find(b => b.description === description);
       if (duplicate) return alert('You already placed this bet.');
-
       const bet = { description, odds };
       betHistory.push(bet);
-
       const list = document.getElementById('bets');
       const item = document.createElement('li');
       item.textContent = `${description} (${odds > 0 ? '+' + odds : odds})`;
       list.appendChild(item);
-
       let balance = getBalance();
-      const betAmount = 10;
-      if (balance >= betAmount) {
-        balance -= betAmount;
+      if (balance >= 10) {
+        balance -= 10;
         localStorage.setItem(`${username}_balance`, balance);
         updateBalanceDisplay();
-
-        const userBets = JSON.parse(localStorage.getItem(`${username}_bets`) || '[]');
-        userBets.push(bet);
-        localStorage.setItem(`${username}_bets`, JSON.stringify(userBets));
+        const stored = JSON.parse(localStorage.getItem(`${username}_bets`) || '[]');
+        stored.push(bet);
+        localStorage.setItem(`${username}_bets`, JSON.stringify(stored));
       } else {
-        alert('Not enough balance.');
+        alert('Insufficient balance.');
       }
-
       updatePayout();
     }
 
     function loadBetHistory() {
       const username = localStorage.getItem('loggedInUser');
-      const storedBets = JSON.parse(localStorage.getItem(`${username}_bets`) || '[]');
-      betHistory = storedBets;
-
+      const stored = JSON.parse(localStorage.getItem(`${username}_bets`) || '[]');
+      betHistory = stored;
       const list = document.getElementById('bets');
       list.innerHTML = '';
-      storedBets.forEach(bet => {
-        const item = document.createElement('li');
-        item.textContent = `${bet.description} (${bet.odds > 0 ? '+' + bet.odds : bet.odds})`;
-        list.appendChild(item);
+      stored.forEach(b => {
+        const li = document.createElement('li');
+        li.textContent = `${b.description} (${b.odds > 0 ? '+' + b.odds : b.odds})`;
+        list.appendChild(li);
       });
-
       updatePayout();
     }
 
@@ -245,32 +242,28 @@
       const team2 = game.away;
       const team1Odds = calculateTeamOdds(team1, teamStats, playerStats);
       const team2Odds = calculateTeamOdds(team2, teamStats, playerStats);
-
-      const props = playerStats
-        .filter(p => p.team === team1 || p.team === team2)
-        .slice(0, 4)
-        .map(p => {
-          const line = (p.goals + p.assists) / (p.games || 1);
-          const propOdds = 100 + Math.floor(50 - line * 10);
-          return `<button onclick=\"addBet('${p.player} o/u ${line.toFixed(1)} pts', ${propOdds})\">${p.player} o/u ${line.toFixed(1)} pts (+${propOdds})</button>`;
-        }).join('');
-
       return `
-        <div class=\"game-panel\">
-          <div class=\"game-header\">
-            <div class=\"teams\">
-              <img src=\"assets/logos/${team1}.png\" alt=\"${team1}\"> ${team1} vs ${team2} <img src=\"assets/logos/${team2}.png\" alt=\"${team2}\">
+        <div class='game-card'>
+          <div class='teams'>${team1} vs ${team2}</div>
+          <div class='odds-container'>
+            <div class='odds-group'>
+              <label>Spread</label>
+              <button onclick="addBet('${team1} -2.5', -110)">${team1} -2.5</button>
+              <button onclick="addBet('${team2} +2.5', -110)">${team2} +2.5</button>
+            </div>
+            <div class='odds-group'>
+              <label>Total</label>
+              <button onclick="addBet('${team1} Over 5.5', -110)">Over 5.5</button>
+              <button onclick="addBet('${team2} Under 5.5', -110)">Under 5.5</button>
+            </div>
+            <div class='odds-group'>
+              <label>Moneyline</label>
+              <button onclick="addBet('${team1} ML', +${team1Odds})">+${team1Odds}</button>
+              <button onclick="addBet('${team2} ML', +${team2Odds})">+${team2Odds}</button>
             </div>
           </div>
-          <div class=\"odds\">
-            <button onclick=\"addBet('${team1} to win', ${team1Odds})\">${team1} +${team1Odds}</button>
-            <button onclick=\"addBet('${team2} to win', ${team2Odds})\">${team2} +${team2Odds}</button>
-          </div>
-          <div class=\"props\">
-            <strong>Player Props:</strong>
-            <div class=\"props-odds\">${props}</div>
-          </div>
-        </div>`;
+        </div>
+      `;
     }
 
     async function loadGames() {
@@ -279,9 +272,8 @@
         fetchJSON('team_stats.json'),
         fetchJSON('player_stats.json')
       ]);
-
-      const gamesHTML = games.map(g => createGameHTML(g, teamStats, playerStats)).join('');
-      document.getElementById('games').innerHTML = gamesHTML;
+      const html = games.map(g => createGameHTML(g, teamStats, playerStats)).join('');
+      document.getElementById('games').innerHTML = html;
     }
   </script>
 </body>
