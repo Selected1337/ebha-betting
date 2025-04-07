@@ -6,11 +6,17 @@
   <title>EBHA Sportsbook</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      transition: all 0.3s ease-in-out;
+    }
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
       background-color: #0b0c10;
       color: #fff;
+    }
+    header, main, footer, #betslip {
+      display: none;
     }
     header {
       background-color: #1f2833;
@@ -81,29 +87,51 @@
       padding: 1rem;
       color: #c5c6c7;
     }
-    #username-input {
-      position: fixed;
-      top: 10px;
-      right: 20px;
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #login-screen input {
+      margin: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: none;
+    }
+    #login-screen button {
+      padding: 0.5rem 1rem;
+      background-color: #66fcf1;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #login-screen button:hover {
+      background-color: #45a29e;
     }
   </style>
 </head>
 <body>
+  <div id="login-screen">
+    <h2>Login to EBHA Sportsbook</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+  </div>
+
   <header>
     <h1>EBHA Sportsbook</h1>
-    <div class="balance">Balance: $<span id="balance">1000</span></div>
+    <div class="balance">Balance: $<span id="balance">0</span></div>
   </header>
-
-  <div id="username-input">
-    <label for="username">User: </label>
-    <input type="text" id="username" placeholder="Enter your name">
-  </div>
 
   <main id="games"></main>
 
   <div id="betslip">
     <h3>Bet Slip</h3>
     <ul id="bets"></ul>
+    <p><strong>Total Payout:</strong> $<span id="payout">0</span></p>
   </div>
 
   <footer>
@@ -111,13 +139,34 @@
   </footer>
 
   <script>
-    async function fetchJSON(path) {
-      const res = await fetch(path);
-      return await res.json();
+    let betHistory = [];
+
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      if (!username || !password) return alert('Please fill in both fields.');
+
+      localStorage.setItem('loggedInUser', username);
+      if (!localStorage.getItem(`${username}_balance`)) {
+        localStorage.setItem(`${username}_balance`, '1000');
+        localStorage.setItem(`${username}_bets`, JSON.stringify([]));
+      }
+      document.getElementById('login-screen').style.display = 'none';
+      document.querySelector('header').style.display = 'flex';
+      document.querySelector('main').style.display = 'block';
+      document.querySelector('#betslip').style.display = 'block';
+      document.querySelector('footer').style.display = 'block';
+      updateBalanceDisplay();
+      loadGames();
+      loadBetHistory();
+    }
+
+    function fetchJSON(path) {
+      return fetch(path).then(res => res.json());
     }
 
     function getBalance() {
-      const username = document.getElementById('username').value;
+      const username = localStorage.getItem('loggedInUser');
       return parseInt(localStorage.getItem(`${username}_balance`) || '1000');
     }
 
@@ -125,12 +174,22 @@
       document.getElementById('balance').textContent = getBalance();
     }
 
+    function updatePayout() {
+      const total = betHistory.reduce((sum, bet) => sum + calculatePayout(bet.odds), 0);
+      document.getElementById('payout').textContent = total.toFixed(2);
+    }
+
+    function calculatePayout(odds) {
+      const betAmount = 10;
+      return odds > 0 ? (betAmount * (odds / 100)) : (betAmount / (Math.abs(odds) / 100));
+    }
+
     function addBet(description, odds) {
-      const username = document.getElementById('username').value;
-      if (!username) {
-        alert('Please enter your username first.');
-        return;
-      }
+      const username = localStorage.getItem('loggedInUser');
+      if (!username) return alert('Please log in.');
+
+      const bet = { description, odds };
+      betHistory.push(bet);
 
       const list = document.getElementById('bets');
       const item = document.createElement('li');
@@ -143,9 +202,31 @@
         balance -= betAmount;
         localStorage.setItem(`${username}_balance`, balance);
         updateBalanceDisplay();
+
+        const userBets = JSON.parse(localStorage.getItem(`${username}_bets`) || '[]');
+        userBets.push(bet);
+        localStorage.setItem(`${username}_bets`, JSON.stringify(userBets));
       } else {
         alert('Not enough balance.');
       }
+
+      updatePayout();
+    }
+
+    function loadBetHistory() {
+      const username = localStorage.getItem('loggedInUser');
+      const storedBets = JSON.parse(localStorage.getItem(`${username}_bets`) || '[]');
+      betHistory = storedBets;
+
+      const list = document.getElementById('bets');
+      list.innerHTML = '';
+      storedBets.forEach(bet => {
+        const item = document.createElement('li');
+        item.textContent = `${bet.description} (${bet.odds > 0 ? '+' + bet.odds : bet.odds})`;
+        list.appendChild(item);
+      });
+
+      updatePayout();
     }
 
     function calculateTeamOdds(team, teamStats, players) {
@@ -196,9 +277,6 @@
       const gamesHTML = games.map(g => createGameHTML(g, teamStats, playerStats)).join('');
       document.getElementById('games').innerHTML = gamesHTML;
     }
-
-    document.getElementById('username').addEventListener('change', updateBalanceDisplay);
-    loadGames();
   </script>
 </body>
 </html>
