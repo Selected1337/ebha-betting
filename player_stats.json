@@ -1,0 +1,16 @@
+[
+  {
+    "player": "Jake Rotwitt",
+    "team": "Spartans",
+    "goals": 10,
+    "assists": 8,
+    "games": 12
+  },
+  {
+    "player": "Evan Lee",
+    "team": "Crusaders",
+    "goals": 5,
+    "assists": 7,
+    "games": 11
+  }
+]

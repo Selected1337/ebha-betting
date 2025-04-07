@@ -1,0 +1,6 @@
+{
+  "Spartans": { "wins": 8, "losses": 4 },
+  "Crusaders": { "wins": 5, "losses": 7 },
+  "Falcons": { "wins": 10, "losses": 2 },
+  "Blizzards": { "wins": 6, "losses": 6 }
+}
