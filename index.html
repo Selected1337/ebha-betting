@@ -15,9 +15,6 @@
       background-color: #0b0c10;
       color: #fff;
     }
-    header, main, footer, #betslip {
-      display: none;
-    }
     header {
       background-color: #1f2833;
       padding: 1rem 2rem;
@@ -32,60 +29,6 @@
     .balance {
       font-weight: 600;
       color: #45a29e;
-    }
-    main {
-      padding: 2rem;
-    }
-    .game, .props {
-      background-color: #1f2833;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-    }
-    .game {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .teams {
-      font-size: 1.1rem;
-    }
-    .odds, .props-odds {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .odds button, .props-odds button {
-      background-color: #66fcf1;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .odds button:hover, .props-odds button:hover {
-      background-color: #45a29e;
-    }
-    #betslip {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      background: #1f2833;
-      border-radius: 10px;
-      padding: 1rem;
-      max-width: 300px;
-      color: white;
-    }
-    #betslip h3 {
-      margin-top: 0;
-    }
-    #betslip ul {
-      padding-left: 20px;
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      color: #c5c6c7;
     }
     #login-screen {
       display: flex;
@@ -111,6 +54,64 @@
     #login-screen button:hover {
       background-color: #45a29e;
     }
+    main {
+      padding: 2rem;
+    }
+    .game-panel {
+      background-color: #1f2833;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(102, 252, 241, 0.1);
+    }
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .game-header img {
+      height: 40px;
+    }
+    .teams {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .odds, .props-odds {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .odds button, .props-odds button {
+      background-color: #66fcf1;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .odds button:hover, .props-odds button:hover {
+      background-color: #45a29e;
+    }
+    #betslip {
+      background-color: #1f2833;
+      padding: 1rem;
+      border-radius: 10px;
+      margin: 2rem;
+      color: white;
+    }
+    #betslip h3 {
+      margin-top: 0;
+    }
+    #betslip ul {
+      padding-left: 20px;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      color: #c5c6c7;
+    }
   </style>
 </head>
 <body>
@@ -121,20 +122,20 @@
     <button onclick="login()">Login</button>
   </div>
 
-  <header>
+  <header style="display:none">
     <h1>EBHA Sportsbook</h1>
     <div class="balance">Balance: $<span id="balance">0</span></div>
   </header>
 
-  <main id="games"></main>
+  <main id="games" style="display:none"></main>
 
-  <div id="betslip">
+  <div id="betslip" style="display:none">
     <h3>Bet Slip</h3>
     <ul id="bets"></ul>
     <p><strong>Total Payout:</strong> $<span id="payout">0</span></p>
   </div>
 
-  <footer>
+  <footer style="display:none">
     &copy; 2025 Elite Ball Hockey Association
   </footer>
 
@@ -151,6 +152,7 @@
         localStorage.setItem(`${username}_balance`, '1000');
         localStorage.setItem(`${username}_bets`, JSON.stringify([]));
       }
+
       document.getElementById('login-screen').style.display = 'none';
       document.querySelector('header').style.display = 'flex';
       document.querySelector('main').style.display = 'block';
@@ -187,6 +189,9 @@
     function addBet(description, odds) {
       const username = localStorage.getItem('loggedInUser');
       if (!username) return alert('Please log in.');
+
+      const duplicate = betHistory.find(bet => bet.description === description);
+      if (duplicate) return alert('You already placed this bet.');
 
       const bet = { description, odds };
       betHistory.push(bet);
@@ -247,24 +252,25 @@
         .map(p => {
           const line = (p.goals + p.assists) / (p.games || 1);
           const propOdds = 100 + Math.floor(50 - line * 10);
-          return `<button onclick="addBet('${p.player} o/u ${line.toFixed(1)} pts', ${propOdds})">${p.player} o/u ${line.toFixed(1)} pts (+${propOdds})</button>`;
+          return `<button onclick=\"addBet('${p.player} o/u ${line.toFixed(1)} pts', ${propOdds})\">${p.player} o/u ${line.toFixed(1)} pts (+${propOdds})</button>`;
         }).join('');
 
       return `
-        <div class="game">
-          <div class="teams">${team1} vs ${team2}</div>
-          <div class="odds">
-            <button onclick="addBet('${team1} to win', ${team1Odds})">${team1} +${team1Odds}</button>
-            <button onclick="addBet('${team2} to win', ${team2Odds})">${team2} +${team2Odds}</button>
+        <div class=\"game-panel\">
+          <div class=\"game-header\">
+            <div class=\"teams\">
+              <img src=\"assets/logos/${team1}.png\" alt=\"${team1}\"> ${team1} vs ${team2} <img src=\"assets/logos/${team2}.png\" alt=\"${team2}\">
+            </div>
           </div>
-        </div>
-        <div class="props">
-          <strong>Player Props:</strong>
-          <div class="props-odds">
-            ${props}
+          <div class=\"odds\">
+            <button onclick=\"addBet('${team1} to win', ${team1Odds})\">${team1} +${team1Odds}</button>
+            <button onclick=\"addBet('${team2} to win', ${team2Odds})\">${team2} +${team2Odds}</button>
           </div>
-        </div>
-      `;
+          <div class=\"props\">
+            <strong>Player Props:</strong>
+            <div class=\"props-odds\">${props}</div>
+          </div>
+        </div>`;
     }
 
     async function loadGames() {
