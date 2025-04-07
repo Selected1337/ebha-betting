@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EBHA Sportsbook</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -52,27 +52,55 @@
       font-weight: bold;
       cursor: pointer;
     }
+    #bet-type-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+      background-color: #121212;
+    }
+    #bet-type-toggle button {
+      background-color: #2c2c2e;
+      color: #00ff87;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
     main {
       padding: 1rem;
     }
     .game-card {
       background-color: #1c1c1c;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
       border-radius: 8px;
       padding: 1rem;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     .teams {
       font-size: 1.1rem;
       font-weight: bold;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.5rem;
+      gap: 0.5rem;
+    }
+    .teams img {
+      height: 32px;
     }
     .odds-container {
       display: flex;
       justify-content: space-between;
       gap: 0.5rem;
+      margin-top: 1rem;
     }
     .odds-group {
       display: flex;
@@ -93,8 +121,17 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    .odds-group button:hover {
-      background-color: #444;
+    .player-props {
+      margin-top: 1rem;
+    }
+    .prop-slider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    .prop-slider input[type="range"] {
+      width: 100px;
     }
     #betslip {
       position: fixed;
@@ -124,8 +161,8 @@
 <body>
   <div id="login-screen">
     <h2>Login to EBHA Sportsbook</h2>
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="password" placeholder="Password" />
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
   </div>
 
@@ -133,6 +170,12 @@
     <h1>EBHA Sportsbook</h1>
     <div class="balance">Balance: $<span id="balance">0</span></div>
   </header>
+
+  <div id="bet-type-toggle" style="display: none">
+    <button onclick="setBetType('standard')">Standard</button>
+    <button onclick="setBetType('parlay')">Parlay</button>
+    <button onclick="setBetType('sgp')">SGP</button>
+  </div>
 
   <main id="games" style="display: none"></main>
 
@@ -148,6 +191,7 @@
 
   <script>
     let betHistory = [];
+    let selectedBetType = 'standard';
 
     function login() {
       const username = document.getElementById('username').value;
@@ -160,12 +204,18 @@
       }
       document.getElementById('login-screen').style.display = 'none';
       document.querySelector('header').style.display = 'flex';
+      document.getElementById('bet-type-toggle').style.display = 'flex';
       document.querySelector('main').style.display = 'block';
       document.querySelector('#betslip').style.display = 'block';
       document.querySelector('footer').style.display = 'block';
       updateBalanceDisplay();
       loadGames();
       loadBetHistory();
+    }
+
+    function setBetType(type) {
+      selectedBetType = type;
+      loadGames();
     }
 
     async function fetchJSON(path) {
@@ -183,8 +233,18 @@
     }
 
     function updatePayout() {
-      const total = betHistory.reduce((sum, bet) => sum + calculatePayout(bet.odds), 0);
-      document.getElementById('payout').textContent = total.toFixed(2);
+      let payout = 0;
+      if (selectedBetType === 'parlay' && betHistory.length > 1) {
+        let combinedDecimal = betHistory.reduce((acc, bet) => acc * convertToDecimal(bet.odds), 1);
+        payout = 10 * combinedDecimal;
+      } else {
+        payout = betHistory.reduce((sum, bet) => sum + calculatePayout(bet.odds), 0);
+      }
+      document.getElementById('payout').textContent = payout.toFixed(2);
+    }
+
+    function convertToDecimal(odds) {
+      return odds > 0 ? (odds / 100) + 1 : (100 / Math.abs(odds)) + 1;
     }
 
     function calculatePayout(odds) {
@@ -195,14 +255,12 @@
     function addBet(description, odds) {
       const username = localStorage.getItem('loggedInUser');
       if (!username) return alert('Please log in.');
-      const duplicate = betHistory.find(b => b.description === description);
-      if (duplicate) return alert('You already placed this bet.');
-      const bet = { description, odds };
+      if (betHistory.find(b => b.description === description)) return alert('Bet already placed.');
+      const bet = { description, odds, type: selectedBetType };
       betHistory.push(bet);
-      const list = document.getElementById('bets');
-      const item = document.createElement('li');
-      item.textContent = `${description} (${odds > 0 ? '+' + odds : odds})`;
-      list.appendChild(item);
+      const li = document.createElement('li');
+      li.textContent = `${description} (${odds > 0 ? '+' + odds : odds})`;
+      document.getElementById('bets').appendChild(li);
       let balance = getBalance();
       if (balance >= 10) {
         balance -= 10;
@@ -212,7 +270,7 @@
         stored.push(bet);
         localStorage.setItem(`${username}_bets`, JSON.stringify(stored));
       } else {
-        alert('Insufficient balance.');
+        alert('Not enough balance.');
       }
       updatePayout();
     }
@@ -231,48 +289,43 @@
       updatePayout();
     }
 
-    function calculateTeamOdds(team, teamStats, players) {
-      const record = teamStats[team]?.wins ?? 0;
-      const totalPoints = players.filter(p => p.team === team).reduce((sum, p) => sum + (p.goals + p.assists), 0);
-      return Math.max(100, 200 - (record * 2 + totalPoints * 0.5));
-    }
-
-    function createGameHTML(game, teamStats, playerStats) {
-      const team1 = game.home;
-      const team2 = game.away;
-      const team1Odds = calculateTeamOdds(team1, teamStats, playerStats);
-      const team2Odds = calculateTeamOdds(team2, teamStats, playerStats);
-      return `
-        <div class='game-card'>
-          <div class='teams'>${team1} vs ${team2}</div>
-          <div class='odds-container'>
-            <div class='odds-group'>
-              <label>Spread</label>
-              <button onclick="addBet('${team1} -2.5', -110)">${team1} -2.5</button>
-              <button onclick="addBet('${team2} +2.5', -110)">${team2} +2.5</button>
-            </div>
-            <div class='odds-group'>
-              <label>Total</label>
-              <button onclick="addBet('${team1} Over 5.5', -110)">Over 5.5</button>
-              <button onclick="addBet('${team2} Under 5.5', -110)">Under 5.5</button>
-            </div>
-            <div class='odds-group'>
-              <label>Moneyline</label>
-              <button onclick="addBet('${team1} ML', +${team1Odds})">+${team1Odds}</button>
-              <button onclick="addBet('${team2} ML', +${team2Odds})">+${team2Odds}</button>
-            </div>
+    function createGameHTML(game) {
+      return `<div class='game-card fade-in'>
+        <div class='teams'>
+          <img src='assets/logos/${game.home}.png' alt='${game.home}' />
+          ${game.home} vs ${game.away}
+          <img src='assets/logos/${game.away}.png' alt='${game.away}' />
+        </div>
+        <div class='odds-container'>
+          <div class='odds-group'>
+            <label>Spread</label>
+            <button onclick="addBet('${game.home} -2.5', -110)">${game.home} -2.5</button>
+            <button onclick="addBet('${game.away} +2.5', -110)">${game.away} +2.5</button>
+          </div>
+          <div class='odds-group'>
+            <label>Total</label>
+            <button onclick="addBet('${game.home} Over 5.5', -110)">Over 5.5</button>
+            <button onclick="addBet('${game.away} Under 5.5', -110)">Under 5.5</button>
+          </div>
+          <div class='odds-group'>
+            <label>Moneyline</label>
+            <button onclick="addBet('${game.home} ML', +120)">+120</button>
+            <button onclick="addBet('${game.away} ML', -140)">-140</button>
           </div>
         </div>
-      `;
+        <div class='player-props'>
+          <strong>Player Props (Example Sliders):</strong>
+          <div class='prop-slider'>
+            <label>Jake Rotwitt o/u</label>
+            <input type='range' min='0.5' max='3.5' step='0.5' value='1.5' onchange="addBet('Jake o/u ' + this.value + ' pts', +100)" />
+          </div>
+        </div>
+      </div>`;
     }
 
     async function loadGames() {
-      const [games, teamStats, playerStats] = await Promise.all([
-        fetchJSON('games.json'),
-        fetchJSON('team_stats.json'),
-        fetchJSON('player_stats.json')
-      ]);
-      const html = games.map(g => createGameHTML(g, teamStats, playerStats)).join('');
+      const games = await fetchJSON('games.json');
+      const html = games.map(createGameHTML).join('');
       document.getElementById('games').innerHTML = html;
     }
   </script>
